@@ -70,7 +70,8 @@ namespace SPA.Controllers
         {
             get
             {
-                return _signInManager ?? HttpContext.GetOwinContext().Get<ApplicationSignInManager>();
+                return _signInManager ?? HttpContext.GetOwinContext().Get<ApplicationSignInManager>()
+                    ?? ApplicationSignInManager.Create(null, HttpContext.GetOwinContext());
             }
             private set { _signInManager = value; }
         }
