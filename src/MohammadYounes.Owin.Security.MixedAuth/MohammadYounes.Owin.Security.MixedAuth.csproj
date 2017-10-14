@@ -3,8 +3,9 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <TargetFramework>net452</TargetFramework>
+    <TargetFrameworks>net452</TargetFrameworks>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     
     <RootNamespace>MohammadYounes.Owin.Security.MixedAuth</RootNamespace>
     <AssemblyName>MohammadYounes.Owin.Security.MixedAuth</AssemblyName>
@@ -45,11 +46,13 @@
     <Compile Include="MixedAuthHandler.cs" />
     <Compile Include="MixedAuthMiddleware.cs" />
     <Compile Include="MixedAuthOptions.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Provider\IMixedAuthProvider.cs" />
     <Compile Include="Provider\MixedAuthApplyRedirectContext.cs" />
     <Compile Include="Provider\MixedAuthAuthenticatedContext.cs" />
     <Compile Include="Provider\MixedAuthProvider.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
  
 </Project>

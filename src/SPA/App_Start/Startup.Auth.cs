@@ -1,11 +1,11 @@
 ﻿using System;
 using Microsoft.AspNet.Identity;
-using Microsoft.AspNet.Identity.EntityFramework;
+//using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin;
 using Microsoft.Owin.Security.Cookies;
 using Microsoft.Owin.Security.DataProtection;
-using Microsoft.Owin.Security.Google;
+//using Microsoft.Owin.Security.Google;
 using Microsoft.Owin.Security.OAuth;
 using Owin;
 using SPA.Models;
@@ -38,6 +38,8 @@ namespace SPA
         public void ConfigureAuth(IAppBuilder app)
         {
             // Configure the db context, user manager and signin manager to use a single instance per request
+
+            /*
             app.CreatePerOwinContext(ApplicationDbContext.Create);
             app.CreatePerOwinContext<ApplicationUserManager>(ApplicationUserManager.Create);
             app.CreatePerOwinContext<ApplicationSignInManager>(ApplicationSignInManager.Create);
@@ -57,6 +59,8 @@ namespace SPA
                 }
             };
             app.UseCookieAuthentication(cookieOptions);
+            */
+            object cookieOptions = null;
 
             // Use a cookie to temporarily store information about a user logging in with a third party login provider
             app.UseExternalSignInCookie(DefaultAuthenticationTypes.ExternalCookie);
@@ -95,7 +99,9 @@ namespace SPA
             //As we are using LogonUserIdentity, its required to run in PipelineStage.PostAuthenticate
             //Register this after any middleware that uses stage marker PipelineStage.Authenticate
             //See http://www.asp.net/aspnet/overview/owin-and-katana/owin-middleware-in-the-iis-integrated-pipeline      
-            app.UseMixedAuth(cookieOptions);
+
+            Owin.AppBuilderExtensionsMixed.UseMixedAuth(app
+                , cookieOptions);
      
         }
     }

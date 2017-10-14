@@ -27,6 +27,12 @@ namespace MohammadYounes.Owin.Security.MixedAuth
     /// </summary>
     public class MixedAuthMiddleware : AuthenticationMiddleware<MixedAuthOptions>
     {
+        static MixedAuthMiddleware()
+        {
+            Default = new MixedAuthOptions();
+        }
+        public static  MixedAuthOptions Default { get; set; }
+
         // <summary>
         /// Initializes a <see cref="MixedAuthMiddleware"/>
         /// </summary>
@@ -35,7 +41,7 @@ namespace MohammadYounes.Owin.Security.MixedAuth
         /// <param name="options">Configuration options for the middleware</param>
         public MixedAuthMiddleware(OwinMiddleware next, IAppBuilder app,
             MixedAuthOptions options)
-            : base(next, options)
+            : base(next, options ?? Default)
         {
 
             if (String.IsNullOrEmpty(Options.SignInAsAuthenticationType))

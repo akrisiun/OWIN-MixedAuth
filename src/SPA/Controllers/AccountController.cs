@@ -42,12 +42,16 @@ namespace SPA.Controllers
         // The Authorize Action is the end point which gets called when you access any
         // protected Web API. If the user is not logged in then they will be redirected to 
         // the Login page. After a successful login you can call a Web API.
-        [HttpGet]
+        
+        //[HttpGet]
+
+        [AllowAnonymous]
         public ActionResult Authorize()
         {
             var claims = new ClaimsPrincipal(User).Claims.ToArray();
             var identity = new ClaimsIdentity(claims, "Bearer");
             AuthenticationManager.SignIn(identity);
+
             return new EmptyResult();
         }
 
@@ -56,7 +60,7 @@ namespace SPA.Controllers
         [AllowAnonymous]
         public ActionResult Login(string returnUrl)
         {
-            ViewBag.ReturnUrl = returnUrl;
+            ViewBag.ReturnUrl = returnUrl ?? "/";
             return View();
         }
 
@@ -332,6 +336,13 @@ namespace SPA.Controllers
             return RedirectToAction("VerifyCode", new { Provider = model.SelectedProvider, ReturnUrl = model.ReturnUrl, RememberMe = model.RememberMe });
         }
 
+        [AllowAnonymous]
+        public ActionResult Fail(string message)
+        {
+            Response.Write(message);
+            return View();
+        }
+
         //
         // GET: /Account/ExternalLoginCallback
         [AllowAnonymous]
@@ -344,7 +355,25 @@ namespace SPA.Controllers
             }
 
             // Sign in the user with this external login provider if the user already has a login
-            var result = await SignInManager.ExternalSignInAsync(loginInfo, isPersistent: false);
+
+            Task<SignInStatus> resultTask = null;
+            SignInStatus result = default(SignInStatus);
+            LastError = null;
+
+            try
+            {
+                resultTask = SignInManager.ExternalSignInAsync(loginInfo, isPersistent: false);
+                result = await resultTask;
+            }
+            catch (Exception ex)
+            {
+                LastError = ex.InnerException ?? ex;
+                Response.Write($"SignInManager.ExternalSignInAsync fail: {LastError.Message}<br>{LastError.StackTrace}");
+            }
+
+            if (LastError != null)
+                return RedirectToAction($"/Fail/?message={LastError.Message}");
+
             switch (result)
             {
                 case SignInStatus.Success:
@@ -361,6 +390,8 @@ namespace SPA.Controllers
                     return View("ExternalLoginConfirmation", new ExternalLoginConfirmationViewModel { Email = loginInfo.Email });
             }
         }
+
+        public static Exception LastError { get; set; }
 
         //
         // POST: /Account/ExternalLoginConfirmation

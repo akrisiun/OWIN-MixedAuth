@@ -48,7 +48,8 @@ namespace MohammadYounes.Owin.Security.MixedAuth
             {
                 var logonUserIdentity = Options.Provider.GetLogonUserIdentity(Context);
 
-                if (logonUserIdentity.AuthenticationType != Options.CookieOptions.AuthenticationType && logonUserIdentity.IsAuthenticated)
+                if (!logonUserIdentity.AuthenticationType.Equals((Options.CookieOptions?.AuthenticationType ?? ""))
+                    && logonUserIdentity.IsAuthenticated)
                 {
                     AddCookieBackIfExists();
 
@@ -124,7 +125,15 @@ namespace MohammadYounes.Owin.Security.MixedAuth
 
                 var logonUserIdentity = Options.Provider.GetLogonUserIdentity(Context);
                 // If not authenticated or already authenticated using cookies, current identity will be the IIS App Pool, must re-authenticate.
-                if (logonUserIdentity.AuthenticationType == Options.CookieOptions.AuthenticationType || !logonUserIdentity.IsAuthenticated)
+
+                if (logonUserIdentity == null)
+                {
+                    Response.StatusCode = MixedAuthConstants.FakeStatusCode;
+                    return true;
+                }
+
+                if (logonUserIdentity.AuthenticationType.Equals((Options.CookieOptions?.AuthenticationType ?? ""))
+                    || !logonUserIdentity.IsAuthenticated)
                 {
                     // fake status code, will be changed to 401 by HttpApplication.EndRequest event.
                     Response.StatusCode = MixedAuthConstants.FakeStatusCode;
@@ -188,11 +197,16 @@ namespace MohammadYounes.Owin.Security.MixedAuth
                 //if (Context.Request.User.Identity.IsAuthenticated)
 
                 var logonUserIdentity = Options.Provider.GetLogonUserIdentity(Context);
-                // If not authenticated or already authenticated using cookies, current identity will be the IIS App Pool, must re-authenticate.
-                if (logonUserIdentity.AuthenticationType == Options.CookieOptions.AuthenticationType || !logonUserIdentity.IsAuthenticated)
+
+                if (logonUserIdentity != null)
                 {
-                    //replace cookie if already authenticated, must re-authenticate.
-                    ReplaceCookie();
+                    // If not authenticated or already authenticated using cookies, current identity will be the IIS App Pool, must re-authenticate.
+                    if (logonUserIdentity.AuthenticationType.Equals((Options.CookieOptions?.AuthenticationType ?? ""))
+                        || !logonUserIdentity.IsAuthenticated)
+                    {
+                        //replace cookie if already authenticated, must re-authenticate.
+                        ReplaceCookie();
+                    }
                 }
 
                 string redirectUri = Request.Scheme +
@@ -287,7 +301,9 @@ namespace MohammadYounes.Owin.Security.MixedAuth
         /// </summary>
         private void ReplaceCookie()
         {
-            string cookieValue = Context.Request.Cookies[Options.CookieOptions.CookieName];
+            var CookieName = Options.CookieOptions?.CookieName ?? "Mixed.Auth";
+            string cookieValue = Context.Request.Cookies[CookieName];
+
             if (!string.IsNullOrEmpty(cookieValue))
             {
                 //extract ticket

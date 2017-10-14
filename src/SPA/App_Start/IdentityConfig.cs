@@ -1,16 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Entity;
+//using System.Data.Entity;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
 using Microsoft.AspNet.Identity;
-using Microsoft.AspNet.Identity.EntityFramework;
+//using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin;
 using Microsoft.Owin.Security;
 using SPA.Models;
+using Microsoft.AspNet.Identity.EntityFramework;
+using System.Diagnostics;
 
 namespace SPA
 {
@@ -42,13 +44,21 @@ namespace SPA
         public static ApplicationUserManager Create(IdentityFactoryOptions<ApplicationUserManager> options,
             IOwinContext context)
         {
-            var manager = new ApplicationUserManager(new UserStore<ApplicationUser>(context.Get<ApplicationDbContext>()));
+
+            Debugger.Break();
+
+            var manager = new ApplicationUserManager(
+                 // Microsoft.AspNet.Identity.EntityFramework.UserStore
+                 new UserStore<ApplicationUser>(
+                     null));
+                     // context.Get<ApplicationDbContext>()));
+
             // Configure validation logic for usernames
-            manager.UserValidator = new UserValidator<ApplicationUser>(manager)
-            {
-                AllowOnlyAlphanumericUserNames = false,
-                RequireUniqueEmail = true
-            };
+            //manager.UserValidator = new UserValidator<ApplicationUser>(manager)
+            //{
+            //    AllowOnlyAlphanumericUserNames = false,
+            //    RequireUniqueEmail = true
+            //};
 
             // Configure validation logic for passwords
             manager.PasswordValidator = new PasswordValidator
@@ -76,6 +86,7 @@ namespace SPA
                 Subject = "Security Code",
                 BodyFormat = "Your security code is {0}"
             });
+
             manager.EmailService = new EmailService();
             manager.SmsService = new SmsService();
             var dataProtectionProvider = options.DataProtectionProvider;

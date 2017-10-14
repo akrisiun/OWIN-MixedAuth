@@ -19,7 +19,7 @@ using MohammadYounes.Owin.Security.MixedAuth;
 
 namespace Owin
 {
-    public static class AppBuilderExtensions
+    public static class AppBuilderExtensionsMixed
     {
         /// <summary>
         /// Adds a mixed-authentication middleware to your web application pipeline.
@@ -30,20 +30,28 @@ namespace Owin
         /// <returns>The original app parameter</returns>
         public static IAppBuilder UseMixedAuth(this IAppBuilder app,
             MixedAuthOptions options,
-            CookieAuthenticationOptions cookieOptions)
+            CookieAuthenticationOptions cookieOptions = null)
         {
             if (app == null)
                 throw new ArgumentNullException("app");
             if (options == null)
-                throw new ArgumentNullException("options");
-            if (cookieOptions == null)
-                throw new ArgumentNullException("cookieOptions");
-
-            options.CookieOptions = cookieOptions;
+                options = new MixedAuthOptions();
+                //throw new ArgumentNullException("options");
+            if (cookieOptions != null)
+                //throw new ArgumentNullException("cookieOptions");
+                options.CookieOptions = cookieOptions;
 
             app.Use(typeof(MixedAuthMiddleware), app, options);
 
             app.UseStageMarker(PipelineStage.PostAuthenticate);
+
+            return app;
+        }
+
+        public static IAppBuilder UseMixedAuth(this IAppBuilder app, object obj)
+        {
+            //if (obj is MixedAuthOptions)
+            UseMixedAuth(app, obj as MixedAuthOptions, null);
 
             return app;
         }

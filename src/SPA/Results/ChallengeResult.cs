@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.Http;
 
 namespace SPA.Results
@@ -22,7 +23,15 @@ namespace SPA.Results
 
         public Task<HttpResponseMessage> ExecuteAsync(CancellationToken cancellationToken)
         {
-            Request.GetOwinContext().Authentication.Challenge(LoginProvider);
+            // Owin.System.Web
+            //HttpRequestBase req = Request
+            //HttpContextBase ctx = 
+            //var owinCtx = HttpContextBaseExtensions.GetOwinContext(Request);
+            //owinCtx.Authentication.Challenge(LoginProvider);
+
+            var httpOwin = OwinHttpRequestMessageExtensions.GetOwinContext(Request);
+            // Request.GetOwinContext()
+            httpOwin.Authentication.Challenge(LoginProvider);
 
             HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
             response.RequestMessage = Request;
