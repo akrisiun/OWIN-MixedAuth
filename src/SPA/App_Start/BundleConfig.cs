@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
+#if WIN
+
 using System.Web.Optimization;
 
 namespace SPA
@@ -48,3 +51,5 @@ namespace SPA
         }
     }
 }
+
+#endif

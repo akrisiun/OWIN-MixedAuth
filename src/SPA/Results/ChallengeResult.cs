@@ -23,6 +23,12 @@ namespace SPA.Results
 
         public Task<HttpResponseMessage> ExecuteAsync(CancellationToken cancellationToken)
         {
+            return null;
+        }
+
+        /*
+        public Task<HttpResponseMessage> ExecuteAsync(CancellationToken cancellationToken)
+        {
             // Owin.System.Web
             //HttpRequestBase req = Request
             //HttpContextBase ctx = 
@@ -33,9 +39,23 @@ namespace SPA.Results
             // Request.GetOwinContext()
             httpOwin.Authentication.Challenge(LoginProvider);
 
-            HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
-            response.RequestMessage = Request;
+            / * 
+            #region Assembly System.Net.Http, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a
+            // System.Net.Http.dll
+
+            // HttpStatusCode.Unauthorized); 
+            // Unauthorized = 401
+            // to assembly 'System.Net.Primitives, Version=4.0.10.0 
+            return Task.FromResult(null);
+            * /
+
+            HttpResponseMessage response = new HttpResponseMessage(Unauthorized); 
+            // response.RequestMessage = Request;
+            
             return Task.FromResult(response);
         }
+        */
+
+        public const int Unauthorized = 401;
     }
 }
