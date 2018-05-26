@@ -17,6 +17,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace MohammadYounes.Owin.Security.MixedAuth
 {
@@ -31,6 +32,7 @@ namespace MohammadYounes.Owin.Security.MixedAuth
         /// </summary>
         public MixedAuthHandler()
         {
+            // Debugger.Break();
         }
         #endregion
 
@@ -57,6 +59,7 @@ namespace MohammadYounes.Owin.Security.MixedAuth
 
                     //name identifier
                     // Microsoft.Owin.Security.AuthenticationManagerExtensions: ExternalLoginInfo GetExternalLoginInfo(AuthenticateResult result)
+
                     claimsIdentity.AddClaim(new Claim(ClaimTypes.NameIdentifier, logonUserIdentity.User.Value, null, Options.AuthenticationType));
 
                     // Import custom claims.
@@ -88,18 +91,19 @@ namespace MohammadYounes.Owin.Security.MixedAuth
         public async override System.Threading.Tasks.Task<bool> InvokeAsync()
         {
 
-
             // This is always invoked on each request. For passive middleware, only do anything if this is
             // for our callback path when the user is redirected back from the authentication provider.
             if (Options.CallbackPath.HasValue && Options.CallbackPath == Request.Path)
             {
+                // Debugger.Break();
 
                 //request token info
                 if (!string.IsNullOrEmpty(Request.Query["access_token"]) && Request.QueryString.Value.IndexOf("token_info") >= 0)
                 {
+                    AuthenticationTicket ticket = null;
                     try
                     {
-                        AuthenticationTicket ticket = UnpackAccessTokenParameter(Request.Query);
+                        ticket = UnpackAccessTokenParameter(Request.Query);
 
                         Newtonsoft.Json.Linq.JObject token = new Newtonsoft.Json.Linq.JObject();
                         var claim = ticket.Identity.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
@@ -132,27 +136,44 @@ namespace MohammadYounes.Owin.Security.MixedAuth
                     return true;
                 }
 
+                AuthenticationProperties state = null;
+
                 if (logonUserIdentity.AuthenticationType.Equals((Options.CookieOptions?.AuthenticationType ?? ""))
                     || !logonUserIdentity.IsAuthenticated)
                 {
+                    var path = Request?.Path.ToString() ?? "";
+                    bool isMixed = path.StartsWith("/MixedAuth");
+
+                    // IEnumerable<
+                    KeyValuePair <string, string[]> paramOne = Request.Query.FirstOrDefault();
+                    isMixed = isMixed && "state".Equals(paramOne.Key ?? "");
+                    if (isMixed)
+                    {
+                        var stateStr = paramOne.Value[0] as string ?? "";
+                        state = StateUnprotect(Options, stateStr);
+
+                    }
+
                     // fake status code, will be changed to 401 by HttpApplication.EndRequest event.
                     Response.StatusCode = MixedAuthConstants.FakeStatusCode;
                     // Prevent further processing by the owin pipeline.
+
                     return true;
                 }
-                else
-                {
-                    var ticket = await AuthenticateAsync();
-                    //authenticatd
-                    if (ticket != null)
-                    {
-                        Context.Authentication.SignIn(ticket.Properties, ticket.Identity);
 
-                        Response.Redirect(ticket.Properties.RedirectUri);
+                // else
+                
+                    var ticket2 = await AuthenticateAsync();
+                    //authenticatd
+                    if (ticket2 != null)
+                    {
+                        Context.Authentication.SignIn(ticket2.Properties, ticket2.Identity);
+
+                        Response.Redirect(ticket2.Properties.RedirectUri);
                         // Prevent further processing by the owin pipeline.
                         return true;
                     }
-                }
+                
             }
             else
             {
@@ -171,11 +192,29 @@ namespace MohammadYounes.Owin.Security.MixedAuth
         /// <returns>return null</returns>
         protected override Task ApplyResponseChallengeAsync()
         {
+            var Request = this.Context.Request;
+            var path = Request?.Path.ToString() ?? "";
+            bool isExternalLogin = path.StartsWith("/Account/ExternalLogin");
+
             if (Response.StatusCode == MixedAuthConstants.FakeStatusCode)
             {
                 // fake status code to be handled by HttpApplication.EndRequest Event.
+                bool isMixed = path.StartsWith("/MixedAuth");
 
-                return Task.FromResult<object>(null);
+                if (isMixed)
+                {
+                    // IEnumerable<
+                    KeyValuePair<string, string[]> paramOne = Request.Query.FirstOrDefault();
+                    isMixed = isMixed && "state".Equals(paramOne.Key ?? "");
+                    var stateData = paramOne.Value[0] as string ?? "";
+
+                    var state = StateUnprotect(this.Options, stateData);
+                }
+
+                if (!isMixed)
+                    return Task.FromResult<object>(null);
+                else 
+                    Response.StatusCode = 401;
             }
 
             if (Response.StatusCode != 401)
@@ -185,12 +224,14 @@ namespace MohammadYounes.Owin.Security.MixedAuth
                 return Task.FromResult<object>(null);
             }
 
-            AuthenticationResponseChallenge challenge = Helper.LookupChallenge(Options.AuthenticationType, Options.AuthenticationMode);
+            // Debugger.Break();
+            AuthenticationResponseChallenge challenge = 
+                Helper.LookupChallenge(Options.AuthenticationType, Options.AuthenticationMode);
 
             if (challenge != null)
             {
                 //update redirect uri if not set.
-                var state = challenge.Properties;
+                AuthenticationProperties state = challenge.Properties;
                 if (String.IsNullOrEmpty(state.RedirectUri))
                     state.RedirectUri = Request.Scheme + Uri.SchemeDelimiter + Request.Host + Request.PathBase + Request.Path + Request.QueryString;
 
@@ -201,7 +242,8 @@ namespace MohammadYounes.Owin.Security.MixedAuth
                 if (logonUserIdentity != null)
                 {
                     // If not authenticated or already authenticated using cookies, current identity will be the IIS App Pool, must re-authenticate.
-                    if (logonUserIdentity.AuthenticationType.Equals((Options.CookieOptions?.AuthenticationType ?? ""))
+                    if (logonUserIdentity.AuthenticationType
+                        .Equals((Options.CookieOptions?.AuthenticationType ?? ""))
                         || !logonUserIdentity.IsAuthenticated)
                     {
                         //replace cookie if already authenticated, must re-authenticate.
@@ -213,7 +255,7 @@ namespace MohammadYounes.Owin.Security.MixedAuth
                     Uri.SchemeDelimiter +
                     Request.Host +
                     RequestPathBase +
-                    Options.CallbackPath + "?state=" + Uri.EscapeDataString(Options.StateDataFormat.Protect(state));
+                    Options.CallbackPath + "?state=" + StateProtect(Options, state);
 
 
                 var redirectContext = new MixedAuthApplyRedirectContext(Context, Options, state, redirectUri);
@@ -223,8 +265,27 @@ namespace MohammadYounes.Owin.Security.MixedAuth
             }
             return Task.FromResult<object>(null);
         }
+
+
+
         #endregion
 
+        public static string StateProtect(MixedAuthOptions Options, AuthenticationProperties state)
+        {
+            var data = Options.StateDataFormat.Protect(state);
+            return Uri.EscapeDataString(data);
+        }
+
+        public static AuthenticationProperties StateUnprotect(MixedAuthOptions Options, string data)
+        {
+            var str = Uri.UnescapeDataString(data);
+            if (string.IsNullOrWhiteSpace(str) || Options == null)
+                return null;
+
+            var state = Options.StateDataFormat.Unprotect(str);
+            return state as AuthenticationProperties;
+        }
+        
         #region helpers
         /// <summary>
         /// Helper: reads state query string parameter.

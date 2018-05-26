@@ -1,15 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
 using Microsoft.AspNet.Identity;
-using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
-using Microsoft.Owin.Security;
-using Owin;
 using SPA.Models;
 
 namespace SPA.Controllers
@@ -43,7 +36,9 @@ namespace SPA.Controllers
         // GET api/Me
         public GetViewModel Get()
         {
-            var user = UserManager?.FindById(User.Identity.GetUserId());
+            ApplicationUser user = UserManager?.FindById(User.Identity.GetUserId());
+            var principal = User?.Identity;
+            var name = principal?.Name ?? "";
 
             return new GetViewModel() { Hometown = user?.Hometown };
         }

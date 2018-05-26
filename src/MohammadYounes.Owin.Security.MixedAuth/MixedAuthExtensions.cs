@@ -35,7 +35,16 @@ namespace MohammadYounes.Owin.Security.MixedAuth
         {
             app.EndRequest += (object sender, EventArgs e) =>
             {
-                if (app.Context.Response.StatusCode == MixedAuthConstants.FakeStatusCode)
+                if (app.Context.Response.StatusCode == 302) // 302 found ...
+                {
+                     // breakpoint??
+                }
+                if (app.Context.Response.StatusCode == 403) // 302 found ...
+                {
+                    // breakpoint??
+                }
+
+                if (app.Context.Response.StatusCode == MixedAuthConstants.FakeStatusCode) // 418
                 {
                     app.Context.Response.StatusCode = 401;
                     app.Context.Response.SubStatusCode = 2;

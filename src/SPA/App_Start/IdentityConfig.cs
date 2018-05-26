@@ -37,8 +37,15 @@ namespace SPA
     // Configure the application user manager which is used in this application.
     public class ApplicationUserManager : UserManager<ApplicationUser>
     {
+        static ApplicationUserManager()
+        {
+            DefaultStore = new UserStore<ApplicationUser>();
+        }
+
+        public static IUserStore<ApplicationUser> DefaultStore  { get; set; }
+
         public ApplicationUserManager(IUserStore<ApplicationUser> store)
-            : base(store)
+            : base(store ?? DefaultStore)
         {
         }
         public static ApplicationUserManager Create(IdentityFactoryOptions<ApplicationUserManager> options,
@@ -47,18 +54,19 @@ namespace SPA
 
             Debugger.Break();
 
+            // Microsoft.AspNet.Identity.EntityFramework.UserStore
+            IUserStore<ApplicationUser> store = DefaultStore;
             var manager = new ApplicationUserManager(
-                 // Microsoft.AspNet.Identity.EntityFramework.UserStore
-                 new UserStore<ApplicationUser>(
-                     null));
+                     store
+                     );
                      // context.Get<ApplicationDbContext>()));
 
             // Configure validation logic for usernames
-            //manager.UserValidator = new UserValidator<ApplicationUser>(manager)
-            //{
+            // manager.UserValidator = new UserValidator<ApplicationUser>(manager)
+            // {
             //    AllowOnlyAlphanumericUserNames = false,
             //    RequireUniqueEmail = true
-            //};
+            // };
 
             // Configure validation logic for passwords
             manager.PasswordValidator = new PasswordValidator
@@ -112,7 +120,9 @@ namespace SPA
 
         public static ApplicationSignInManager Create(IdentityFactoryOptions<ApplicationSignInManager> options, IOwinContext context)
         {
-            return new ApplicationSignInManager(context.GetUserManager<ApplicationUserManager>(), context.Authentication);
+            var manager = context.GetUserManager<ApplicationUserManager>()
+                ?? new ApplicationUserManager(null);
+            return new ApplicationSignInManager(manager, context.Authentication);
         }
     }
 }

@@ -74,7 +74,8 @@ namespace SPA.Controllers
         {
             get
             {
-                return _signInManager ?? HttpContext.GetOwinContext().Get<ApplicationSignInManager>();
+                return _signInManager ?? HttpContext.GetOwinContext().Get<ApplicationSignInManager>()
+                    ?? ApplicationSignInManager.Create(null, HttpContext.GetOwinContext());
             }
             private set { _signInManager = value; }
         }
@@ -370,7 +371,7 @@ namespace SPA.Controllers
                 if (manager != null)
                 {
                     resultTask = manager.ExternalSignInAsync(loginInfo, isPersistent: false);
-                    result = await resultTask;
+                result = await resultTask;
                 }
                 else if (User.Identity.IsAuthenticated)
                 {
