@@ -22,8 +22,8 @@ namespace SPA.Controllers
         }
 
 
-        //[Authorize]
-        [AllowAnonymous]
+        [Authorize]
+        // [AllowAnonymous]
         public ActionResult Login()
         {
             return View();

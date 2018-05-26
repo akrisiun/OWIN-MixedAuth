@@ -1,0 +1,13 @@
+﻿@model System.Web.Mvc.HandleErrorInfo
+@{
+    ViewBag.Title = "Error";
+    var ex = Model.Exception;
+    var msg = (ex.InnerException ?? ex).Message;
+}
+
+<h1 class="text-danger">Error.</h1>
+<h2 class="text-danger">An error occurred while processing your request.</h2>
+
+@msg
+<br/>
+@ex.Source

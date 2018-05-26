@@ -37,15 +37,8 @@ namespace SPA
     // Configure the application user manager which is used in this application.
     public class ApplicationUserManager : UserManager<ApplicationUser>
     {
-        static ApplicationUserManager()
-        {
-            DefaultStore = new UserStore<ApplicationUser>();
-        }
-
-        public static IUserStore<ApplicationUser> DefaultStore  { get; set; }
-
         public ApplicationUserManager(IUserStore<ApplicationUser> store)
-            : base(store ?? DefaultStore)
+            : base(store)
         {
         }
         public static ApplicationUserManager Create(IdentityFactoryOptions<ApplicationUserManager> options,
@@ -55,9 +48,9 @@ namespace SPA
             Debugger.Break();
 
             var manager = new ApplicationUserManager(
-                     // Microsoft.AspNet.Identity.EntityFramework.UserStore
-                     DefaultStore
-                     );
+                 // Microsoft.AspNet.Identity.EntityFramework.UserStore
+                 new UserStore<ApplicationUser>(
+                     null));
                      // context.Get<ApplicationDbContext>()));
 
             // Configure validation logic for usernames
@@ -119,9 +112,7 @@ namespace SPA
 
         public static ApplicationSignInManager Create(IdentityFactoryOptions<ApplicationSignInManager> options, IOwinContext context)
         {
-            var manager = context.GetUserManager<ApplicationUserManager>()
-                ?? new ApplicationUserManager(null);
-            return new ApplicationSignInManager(manager, context.Authentication);
+            return new ApplicationSignInManager(context.GetUserManager<ApplicationUserManager>(), context.Authentication);
         }
     }
 }

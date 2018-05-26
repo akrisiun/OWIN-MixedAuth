@@ -25,6 +25,10 @@ namespace SPA.Controllers
         {
             UserManager = userManager;
             SignInManager = signInManager;
+            if (signInManager == null)
+            {
+                SignInManager = HttpContext.GetOwinContext().GetUserManager<ApplicationSignInManager>();
+            }
         }
 
         public ApplicationUserManager UserManager
@@ -70,8 +74,7 @@ namespace SPA.Controllers
         {
             get
             {
-                return _signInManager ?? HttpContext.GetOwinContext().Get<ApplicationSignInManager>()
-                    ?? ApplicationSignInManager.Create(null, HttpContext.GetOwinContext());
+                return _signInManager ?? HttpContext.GetOwinContext().Get<ApplicationSignInManager>();
             }
             private set { _signInManager = value; }
         }
@@ -363,8 +366,16 @@ namespace SPA.Controllers
 
             try
             {
-                resultTask = SignInManager.ExternalSignInAsync(loginInfo, isPersistent: false);
-                result = await resultTask;
+                var manager = SignInManager;
+                if (manager != null)
+                {
+                    resultTask = manager.ExternalSignInAsync(loginInfo, isPersistent: false);
+                    result = await resultTask;
+                }
+                else if (User.Identity.IsAuthenticated)
+                {
+                    result = SignInStatus.Success;
+                }
             }
             catch (Exception ex)
             {
